@@ -1,0 +1,17 @@
+{
+    "app": {
+        "appId": "1647033733033401329",
+        "title": "mttq-miniapp",
+        "textColor": {
+            "light": "black",
+            "dark": "white"
+        },
+        "statusBar": "transparent",
+        "actionBarHidden": true,
+        "hideIOSSafeAreaBottom": true,
+        "hideAndroidBottomNavigationBar": false
+    },
+    "listCSS": [],
+    "listSyncJS": [],
+    "listAsyncJS": []
+}
