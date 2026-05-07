@@ -29,7 +29,7 @@ const SurveysPage = () => {
             <Header title="Khảo sát ý kiến" showBackIcon={true} />
 
             <Box p={4}>
-                <Text className="text-gray-500 mb-4 text-sm">
+                <Text className="text-gray-500 mb-4 text-sm pt-20">
                     Ý kiến đóng góp của bạn giúp chúng tôi cải thiện chất lượng
                     phục vụ tốt hơn.
                 </Text>

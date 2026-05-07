@@ -13,7 +13,7 @@ import {
 } from 'zmp-ui'
 import { authenticateZaloUser } from '../services/auth'
 import { getLocalAlerts } from '../services/damageApi'
-
+import logoMatTran from '../static/unnamed_5bc56.png';
 const HomePage = () => {
     const [user, setUser] = useState(null)
     const navigate = useNavigate()
@@ -22,6 +22,9 @@ const HomePage = () => {
     const [alertModalVisible, setAlertModalVisible] = useState(false)
     const [alertData, setAlertData] = useState([])
 
+    // ==========================================
+    // LOGIC KHỞI TẠO APP & LẤY THÔNG TIN USER
+    // ==========================================
     useEffect(() => {
         const initApp = async () => {
             try {
@@ -32,8 +35,13 @@ const HomePage = () => {
             }
         }
         initApp()
+        // Mảng rỗng [] giúp tránh lỗi lặp vô hạn
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
+    // ==========================================
+    // LOGIC KIỂM TRA CẢNH BÁO TẠI VỊ TRÍ
+    // ==========================================
     useEffect(() => {
         const checkDangerZone = async () => {
             if (sessionStorage.getItem('hasShownAlert')) return
@@ -56,242 +64,171 @@ const HomePage = () => {
         checkDangerZone()
     }, [])
 
+    // ==========================================
+    // DANH SÁCH MENU (9 ITEMS - 3 CỘT x 3 HÀNG)
+    // ==========================================
+    const menuItems = [
+        {
+            title: 'Gọi khẩn cấp',
+            icon: 'zi-call',
+            color: 'text-red-600',
+            action: () => { window.location.href = 'tel:02053812209' }, // Lệnh gọi điện thoại
+            isPulse: true // Cờ tạo hiệu ứng nhấp nháy
+        },
+        {
+            title: 'Khai báo thiệt hại',
+            icon: 'zi-warning-solid',
+            color: 'text-orange-500',
+            path: '/create-damage-report',
+            badge: 'star'
+        },
+        {
+            title: 'Bản đồ cảnh báo',
+            icon: 'zi-location-solid',
+            color: 'text-blue-500',
+            path: '/damage-map',
+        },
+        {
+            title: 'Tra cứu hồ sơ',
+            icon: 'zi-search',
+            color: 'text-blue-600',
+            path: '/my-damage-reports',
+        },
+        {
+            title: 'Gửi phản ánh',
+            icon: 'zi-chat-solid',
+            color: 'text-yellow-500',
+            path: '/create-report',
+        },
+        {
+            title: 'Phản ánh của tôi',
+            icon: 'zi-list-1',
+            color: 'text-teal-600',
+            path: '/my-reports',
+            badge: 'number' 
+        },
+        {
+            title: 'Hướng dẫn ứng phó',
+            icon: 'zi-info-circle-solid',
+            color: 'text-indigo-500',
+            path: '/guidelines',
+        },
+        {
+            title: 'Khảo sát ý kiến',
+            icon: 'zi-poll',
+            color: 'text-purple-600',
+            path: '/surveys',
+        },
+        {
+            title: 'Tin tức cộng đồng',
+            icon: 'zi-note', // Icon cái chuông hiển thị chuẩn xác
+            color: 'text-red-500',
+            path: '/news',
+        },
+    ]
+
     return (
-        // Thêm flex flex-col min-h-screen để push footer xuống đáy
-        <Page className="page bg-gray-50 flex flex-col min-h-screen relative">
-            <div className="flex-1">
-                {/* 1. KHU VỰC BANNER: Tăng pb-16 thành pb-28 để làm nền cao hơn */}
-                <div className="bg-red-700 pt-12 pb-28 px-4 rounded-b-[40px] shadow-lg relative overflow-hidden">
-                    <div className="absolute top-0 left-0 w-full h-full opacity-20 pointer-events-none">
-                        <div className="absolute -top-10 -right-10 w-40 h-40 bg-yellow-400 rounded-full blur-3xl"></div>
-                        <div className="absolute top-20 -left-10 w-32 h-32 bg-yellow-400 rounded-full blur-2xl"></div>
+        <Page className="bg-white flex flex-col min-h-screen relative font-sans">
+            <div className="flex-1 pb-10">
+                {/* ==========================================
+                    HEADER: PHONG CÁCH HÀNH CHÍNH VIỆT NAM
+                ========================================== */}
+                <div className="bg-[#a3171c] w-full rounded-b-3xl px-4 pt-12 pb-6 shadow-md relative overflow-hidden">
+                    {/* Họa tiết mờ làm nền chìm */}
+                    <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle, transparent 20%, #ffffff 20%, #ffffff 80%, transparent 80%, transparent), radial-gradient(circle, transparent 20%, #ffffff 20%, #ffffff 80%, transparent 80%, transparent)', backgroundSize: '40px 40px', backgroundPosition: '0 0, 20px 20px' }}></div>
+                    
+                    <div className="relative z-10 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            {/* Thay thế phần div ngôi sao bằng thẻ img của bạn */}
+                            <img src={logoMatTran} alt="Logo" className="w-14 h-14 object-contain bg-white rounded-full p-1 shadow-md" />
+                            
+                            <div className="flex flex-col">
+                                <Text className="text-yellow-400 font-bold text-sm tracking-wider uppercase drop-shadow-sm">
+                                    ỦY BAN MẶT TRẬN TỔ QUỐC
+                                </Text>
+                                <Text className="text-white font-bold text-xl uppercase drop-shadow-md">
+                                    Tỉnh Lạng Sơn
+                                </Text>
+                            </div>
+                        </div>
                     </div>
 
-                    <div className="flex items-center relative z-10">
-                        <div className="p-1 bg-gradient-to-tr from-yellow-500 to-yellow-200 rounded-full shadow-lg">
-                            <Avatar
-                                src={user?.avatar}
-                                size={64}
-                                className="border-2 border-white"
-                            />
+                    {/* Lời chào User dạng thẻ banner nổi */}
+                    <div className="mt-6 bg-white/10 border border-white/20 backdrop-blur-sm rounded-xl p-3 flex items-center gap-3 relative z-10">
+                        <Avatar
+                            src={user?.avatar}
+                            size={48}
+                            className="border-2 border-yellow-400 shadow-sm"
+                        />
+                        <div className="flex flex-col text-white">
+                            <Text size="small" className="text-white/80 font-medium">Xin chào công dân,</Text>
+                            <Text bold size="large" className="text-white">{user?.name || 'Đang tải...'}</Text>
                         </div>
-                        <Box ml={4}>
-                            <Text
-                                size="small"
-                                className="text-yellow-100 mb-1 font-medium tracking-wide"
-                            >
-                                Xin chào công dân,
-                            </Text>
-                            <Text
-                                bold
-                                size="xLarge"
-                                className="text-white drop-shadow-md"
-                            >
-                                {user?.name || 'Đang tải...'}
-                            </Text>
-                        </Box>
                     </div>
                 </div>
 
-                {/* 2. HỆ THỐNG QUẢN LÝ THIỆT HẠI: Kéo lên với -mt-14 */}
-                <Box px={4} className="-mt-14 relative z-20">
-                    <Text
-                        bold
-                        className="mb-3 text-white text-[15px] text-center uppercase tracking-wider drop-shadow-md"
-                    >
-                        Hệ Thống Quản Lý Thiệt Hại
-                    </Text>
-
-                    <div className="grid grid-cols-2 gap-3">
-                        <div
-                            onClick={() => navigate('/create-damage-report')}
-                            className="bg-white p-4 rounded-2xl flex flex-col items-center justify-center shadow-[0_4px_20px_rgba(220,38,38,0.1)] active:bg-red-50 transition-all border border-red-100"
-                        >
-                            <div className="bg-red-600 p-3 rounded-full mb-2 shadow-md border-2 border-red-200">
-                                <Icon
-                                    icon="zi-warning-solid"
-                                    className="text-white"
-                                    size={28}
-                                />
-                            </div>
-                            <Text
-                                bold
-                                className="text-center text-[13px] text-gray-800"
+                {/* ==========================================
+                    GRID MENU 3 CỘT (grid-cols-3)
+                ========================================== */}
+                <div className="px-2 mt-6">
+                    <div className="grid grid-cols-3 gap-y-6 gap-x-2">
+                        {menuItems.map((item, index) => (
+                            <div
+                                key={index}
+                                onClick={() => {
+                                    if (item.action) {
+                                        item.action()
+                                    } else if (item.path) {
+                                        navigate(item.path)
+                                    }
+                                }}
+                                className="flex flex-col items-center text-center cursor-pointer active:opacity-60 transition-opacity relative"
                             >
-                                Khai báo thiệt hại
-                            </Text>
-                        </div>
-                        <div
-                            onClick={() => navigate('/my-damage-reports')}
-                            className="bg-white p-4 rounded-2xl flex flex-col items-center justify-center shadow-[0_4px_20px_rgba(0,0,0,0.05)] active:bg-blue-50 transition-all border border-gray-100"
-                        >
-                            <div className="bg-blue-50 p-3 rounded-full mb-2 shadow-inner">
-                                <Icon
-                                    icon="zi-list-1"
-                                    className="text-blue-600"
-                                    size={28}
-                                />
+                                <div className="w-[68px] h-[68px] bg-[#f4f5f7] rounded-2xl flex items-center justify-center mb-2 relative shadow-sm border border-gray-100">
+                                    <Icon 
+                                        icon={item.icon} 
+                                        className={`${item.color} ${item.isPulse ? 'animate-pulse' : ''}`} 
+                                        size={32} 
+                                    />
+                                    
+                                    {/* Hiệu ứng sao đỏ góc trên */}
+                                    {item.badge === 'star' && (
+                                        <div className="absolute -top-1 -right-1 text-red-600">
+                                            <Icon icon="zi-star-solid" size={16} />
+                                        </div>
+                                    )}
+                                    {/* Hiệu ứng số đếm màu đỏ góc trên */}
+                                    {item.badge === 'number' && (
+                                        <div className="absolute -top-1.5 -right-1.5 bg-[#a3171c] text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white">
+                                            1
+                                        </div>
+                                    )}
+                                </div>
+                                <Text className="text-[12px] text-gray-800 font-medium leading-tight px-1 max-w-[90px]">
+                                    {item.title}
+                                </Text>
                             </div>
-                            <Text
-                                bold
-                                className="text-center text-[13px] text-gray-800"
-                            >
-                                Tra cứu hồ sơ
-                            </Text>
-                        </div>
-                        <div
-                            onClick={() => navigate('/damage-map')}
-                            className="bg-white p-4 rounded-2xl flex flex-col items-center justify-center shadow-[0_4px_20px_rgba(0,0,0,0.05)] active:bg-orange-50 transition-all border border-gray-100"
-                        >
-                            <div className="bg-orange-50 p-3 rounded-full mb-2 shadow-inner">
-                                <Icon
-                                    icon="zi-location-solid"
-                                    className="text-orange-500"
-                                    size={28}
-                                />
-                            </div>
-                            <Text
-                                bold
-                                className="text-center text-[13px] text-gray-800"
-                            >
-                                Bản đồ Cảnh báo
-                            </Text>
-                        </div>
-                        <div
-                            onClick={() => navigate('/guidelines')}
-                            className="bg-white p-4 rounded-2xl flex flex-col items-center justify-center shadow-[0_4px_20px_rgba(0,0,0,0.05)] active:bg-teal-50 transition-all border border-gray-100"
-                        >
-                            <div className="bg-teal-50 p-3 rounded-full mb-2 shadow-inner">
-                                <Icon
-                                    icon="zi-info-circle-solid"
-                                    className="text-teal-600"
-                                    size={28}
-                                />
-                            </div>
-                            <Text
-                                bold
-                                className="text-center text-[13px] text-gray-800"
-                            >
-                                Hướng dẫn ứng phó
-                            </Text>
-                        </div>
+                        ))}
                     </div>
-                </Box>
-
-                {/* 3. CỔNG THÔNG TIN - DỊCH VỤ */}
-                <Box px={4} className="mt-8 relative z-20">
-                    <Text
-                        bold
-                        className="mb-3 text-red-800 text-[15px] text-center uppercase tracking-wider drop-shadow-sm"
-                    >
-                        Cổng Thông Tin - Dịch Vụ
-                    </Text>
-
-                    <div className="grid grid-cols-2 gap-3">
-                        <div
-                            onClick={() => navigate('/create-report')}
-                            className="bg-white p-4 rounded-2xl flex flex-col items-center justify-center shadow-sm active:bg-red-50 transition-all border border-gray-100"
-                        >
-                            <div className="bg-red-50 p-3 rounded-full mb-2 shadow-inner">
-                                <Icon
-                                    icon="zi-edit-text"
-                                    className="text-red-700"
-                                    size={28}
-                                />
-                            </div>
-                            <Text
-                                bold
-                                className="text-center text-[13px] text-gray-800"
-                            >
-                                Gửi phản ánh
-                            </Text>
-                        </div>
-                        <div
-                            onClick={() => navigate('/my-reports')}
-                            className="bg-white p-4 rounded-2xl flex flex-col items-center justify-center shadow-sm active:bg-red-50 transition-all border border-gray-100"
-                        >
-                            <div className="bg-red-50 p-3 rounded-full mb-2 shadow-inner">
-                                <Icon
-                                    icon="zi-list-1"
-                                    className="text-red-700"
-                                    size={28}
-                                />
-                            </div>
-                            <Text
-                                bold
-                                className="text-center text-[13px] text-gray-800"
-                            >
-                                Phản ánh của tôi
-                            </Text>
-                        </div>
-                        <div
-                            onClick={() => navigate('/surveys')}
-                            className="bg-white p-4 rounded-2xl flex flex-col items-center justify-center shadow-sm active:bg-red-50 transition-all border border-gray-100"
-                        >
-                            <div className="bg-red-50 p-3 rounded-full mb-2 shadow-inner">
-                                <Icon
-                                    icon="zi-poll"
-                                    className="text-red-700"
-                                    size={28}
-                                />
-                            </div>
-                            <Text
-                                bold
-                                className="text-center text-[13px] text-gray-800"
-                            >
-                                Khảo sát ý kiến
-                            </Text>
-                        </div>
-                        <div
-                            onClick={() => navigate('/news')}
-                            className="bg-white p-4 rounded-2xl flex flex-col items-center justify-center shadow-sm active:bg-red-50 transition-all border border-gray-100"
-                        >
-                            <div className="bg-red-50 p-3 rounded-full mb-2 shadow-inner">
-                                <Icon
-                                    icon="zi-notified"
-                                    className="text-red-700"
-                                    size={28}
-                                />
-                            </div>
-                            <Text
-                                bold
-                                className="text-center text-[13px] text-gray-800"
-                            >
-                                Tin tức & Thông báo
-                            </Text>
-                        </div>
-                    </div>
-                </Box>
+                </div>
             </div>
 
-            {/* 4. FOOTER: Dùng mt-auto để đẩy sát xuống đáy */}
-            <Box
-                p={4}
-                className="mt-auto text-center flex flex-col items-center opacity-80 pb-6"
-            >
-                <div className="w-8 h-8 rounded-full bg-red-700 flex items-center justify-center mb-2 shadow-sm border border-yellow-400">
-                    <Icon
-                        icon="zi-star-solid"
-                        className="text-yellow-400"
-                        size={16}
-                    />
-                </div>
-                <Text
-                    bold
-                    size="small"
-                    className="text-red-800 uppercase tracking-widest mb-1"
-                >
-                    UBMTTQ TỈNH LẠNG SƠN
+            {/* ==========================================
+                FOOTER TRANG TRỌNG
+            ========================================== */}
+            <div className="mt-auto bg-[#8b1418] w-full rounded-t-2xl py-5 px-4 text-center shadow-[0_-4px_10px_rgba(0,0,0,0.1)]">
+                <Text bold className="text-white text-[13px] uppercase tracking-wide mb-1.5 drop-shadow-md">
+                    Ủy Ban Mặt Trận Tổ Quốc Việt Nam Tỉnh Lạng Sơn
                 </Text>
-                <Text size="xxxSmall" className="text-gray-500 uppercase">
-                    Hệ thống tiếp nhận phản ánh & Thiệt hại
+                <Text className="text-white/80 text-[11px] leading-relaxed">
+                    Địa chỉ: Đ.Hoàng Văn Thụ, phường Lương Văn Tri, tỉnh Lạng Sơn<br/>
+                    Điện thoại: (0205) 3812.209 - Email: bbtmttq@langson.gov.vn
                 </Text>
-                <Text size="xxxSmall" className="text-gray-400 mt-1">
-                    Phiên bản 1.0.0
-                </Text>
-            </Box>
+            </div>
 
-            {/* Modal Cảnh báo (Giữ nguyên) */}
+            {/* ==========================================
+                MODAL CẢNH BÁO BẢN ĐỒ
+            ========================================== */}
             <Modal
                 visible={alertModalVisible}
                 title="CẢNH BÁO NGUY HIỂM"
@@ -358,4 +295,5 @@ const HomePage = () => {
         </Page>
     )
 }
+
 export default HomePage

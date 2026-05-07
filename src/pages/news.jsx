@@ -34,7 +34,7 @@ const NewsPage = () => {
         <Page className="page bg-gray-50">
             <Header title="Tin tức & Thông báo" showBackIcon={true} />
 
-            <Box p={4}>
+            <Box className='pt-20' p={4}>
                 <Text className="text-gray-500 mb-4 text-sm">
                     Cập nhật các thông tin, chủ trương và chính sách mới nhất từ
                     cơ quan Đảng và Nhà nước.

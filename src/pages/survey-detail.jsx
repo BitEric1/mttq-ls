@@ -55,7 +55,7 @@ const SurveyDetailPage = () => {
         <Page className="page bg-white">
             <Header title="Tham gia khảo sát" showBackIcon={true} />
 
-            <Box p={4} className="flex flex-col items-center mt-4">
+            <Box p={4} className="flex flex-col items-center mt-4 pt-20">
                 <Text
                     bold
                     size="large"

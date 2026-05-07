@@ -61,7 +61,7 @@ const ReportDetailsPage = () => {
             <Box p={4}>
                 {/* XỬ LÝ LOADING & ERROR */}
                 {loading && (
-                    <div className="flex flex-col items-center mt-10">
+                    <div className="flex flex-col items-center pt-20">
                         <Spinner visible />
                         <Text className="mt-2 text-gray-500">
                             Đang tải dữ liệu...

@@ -1,6 +1,6 @@
 // src/services/damageApi.js
 
-const API_BASE_URL = 'http://localhost:5266/api/v1'
+import { API_BASE_URL } from "../utils/config"
 
 // Tạm thời hardcode MÃ ID CỦA NGƯỜI DÂN mà chúng ta đã mồi trong DB để test (Nguyễn Văn Dân)
 const MOCK_USER_ID = '00000000-0000-0000-0000-000000000001'

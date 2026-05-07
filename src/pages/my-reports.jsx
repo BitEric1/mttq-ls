@@ -77,7 +77,7 @@ const MyReportsPage = () => {
         <Page className="page bg-gray-50">
             <Header title="Phản ánh của tôi" showBackIcon={true} />
 
-            <Box p={4}>
+            <Box className='pt-20' p={4}>
                 {/* 1. TRẠNG THÁI LOADING */}
                 {loading && (
                     <div className="flex flex-col items-center justify-center mt-10">
