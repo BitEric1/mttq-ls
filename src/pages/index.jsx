@@ -1,3 +1,4 @@
+// src/pages/index.jsx
 import { useEffect, useState } from 'react'
 import { getLocation } from 'zmp-sdk/apis'
 import {
@@ -13,7 +14,7 @@ import {
 } from 'zmp-ui'
 import { authenticateZaloUser } from '../services/auth'
 import { getLocalAlerts } from '../services/damageApi'
-import logoMatTran from '../static/unnamed_5bc56.png';
+import logoMatTran from '../static/unnamed_5bc56.png'
 const HomePage = () => {
     const [user, setUser] = useState(null)
     const navigate = useNavigate()
@@ -45,13 +46,16 @@ const HomePage = () => {
     useEffect(() => {
         const checkDangerZone = async () => {
             if (sessionStorage.getItem('hasShownAlert')) return
+
             try {
                 const location = await getLocation({})
                 if (!location || !location.latitude) return
+
                 const response = await getLocalAlerts(
                     location.latitude,
                     location.longitude,
                 )
+
                 if (response.success && response.hasAlert) {
                     setAlertData(response.data)
                     setAlertModalVisible(true)
@@ -61,6 +65,7 @@ const HomePage = () => {
                 console.log('Không thể quét cảnh báo:', error)
             }
         }
+
         checkDangerZone()
     }, [])
 
@@ -72,15 +77,17 @@ const HomePage = () => {
             title: 'Gọi khẩn cấp',
             icon: 'zi-call',
             color: 'text-red-600',
-            action: () => { window.location.href = 'tel:02053812209' }, // Lệnh gọi điện thoại
-            isPulse: true // Cờ tạo hiệu ứng nhấp nháy
+            action: () => {
+                window.location.href = 'tel:02053812209'
+            }, // Lệnh gọi điện thoại
+            isPulse: true, // Cờ tạo hiệu ứng nhấp nháy
         },
         {
             title: 'Khai báo thiệt hại',
             icon: 'zi-warning-solid',
             color: 'text-orange-500',
             path: '/create-damage-report',
-            badge: 'star'
+            badge: 'star',
         },
         {
             title: 'Bản đồ cảnh báo',
@@ -105,7 +112,7 @@ const HomePage = () => {
             icon: 'zi-list-1',
             color: 'text-teal-600',
             path: '/my-reports',
-            badge: 'number' 
+            badge: 'number',
         },
         {
             title: 'Hướng dẫn ứng phó',
@@ -135,13 +142,25 @@ const HomePage = () => {
                 ========================================== */}
                 <div className="bg-[#a3171c] w-full rounded-b-3xl px-4 pt-12 pb-6 shadow-md relative overflow-hidden">
                     {/* Họa tiết mờ làm nền chìm */}
-                    <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle, transparent 20%, #ffffff 20%, #ffffff 80%, transparent 80%, transparent), radial-gradient(circle, transparent 20%, #ffffff 20%, #ffffff 80%, transparent 80%, transparent)', backgroundSize: '40px 40px', backgroundPosition: '0 0, 20px 20px' }}></div>
-                    
+                    <div
+                        className="absolute inset-0 opacity-10"
+                        style={{
+                            backgroundImage:
+                                'radial-gradient(circle, transparent 20%, #ffffff 20%, #ffffff 80%, transparent 80%, transparent), radial-gradient(circle, transparent 20%, #ffffff 20%, #ffffff 80%, transparent 80%, transparent)',
+                            backgroundSize: '40px 40px',
+                            backgroundPosition: '0 0, 20px 20px',
+                        }}
+                    ></div>
+
                     <div className="relative z-10 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             {/* Thay thế phần div ngôi sao bằng thẻ img của bạn */}
-                            <img src={logoMatTran} alt="Logo" className="w-14 h-14 object-contain bg-white rounded-full p-1 shadow-md" />
-                            
+                            <img
+                                src={logoMatTran}
+                                alt="Logo"
+                                className="w-14 h-14 object-contain bg-white rounded-full p-1 shadow-md"
+                            />
+
                             <div className="flex flex-col">
                                 <Text className="text-yellow-400 font-bold text-sm tracking-wider uppercase drop-shadow-sm">
                                     ỦY BAN MẶT TRẬN TỔ QUỐC
@@ -161,8 +180,15 @@ const HomePage = () => {
                             className="border-2 border-yellow-400 shadow-sm"
                         />
                         <div className="flex flex-col text-white">
-                            <Text size="small" className="text-white/80 font-medium">Xin chào công dân,</Text>
-                            <Text bold size="large" className="text-white">{user?.name || 'Đang tải...'}</Text>
+                            <Text
+                                size="small"
+                                className="text-white/80 font-medium"
+                            >
+                                Xin chào công dân,
+                            </Text>
+                            <Text bold size="large" className="text-white">
+                                {user?.name || 'Đang tải...'}
+                            </Text>
                         </div>
                     </div>
                 </div>
@@ -185,16 +211,19 @@ const HomePage = () => {
                                 className="flex flex-col items-center text-center cursor-pointer active:opacity-60 transition-opacity relative"
                             >
                                 <div className="w-[68px] h-[68px] bg-[#f4f5f7] rounded-2xl flex items-center justify-center mb-2 relative shadow-sm border border-gray-100">
-                                    <Icon 
-                                        icon={item.icon} 
-                                        className={`${item.color} ${item.isPulse ? 'animate-pulse' : ''}`} 
-                                        size={32} 
+                                    <Icon
+                                        icon={item.icon}
+                                        className={`${item.color} ${item.isPulse ? 'animate-pulse' : ''}`}
+                                        size={32}
                                     />
-                                    
+
                                     {/* Hiệu ứng sao đỏ góc trên */}
                                     {item.badge === 'star' && (
                                         <div className="absolute -top-1 -right-1 text-red-600">
-                                            <Icon icon="zi-star-solid" size={16} />
+                                            <Icon
+                                                icon="zi-star-solid"
+                                                size={16}
+                                            />
                                         </div>
                                     )}
                                     {/* Hiệu ứng số đếm màu đỏ góc trên */}
@@ -217,11 +246,16 @@ const HomePage = () => {
                 FOOTER TRANG TRỌNG
             ========================================== */}
             <div className="mt-auto bg-[#8b1418] w-full rounded-t-2xl py-5 px-4 text-center shadow-[0_-4px_10px_rgba(0,0,0,0.1)]">
-                <Text bold className="text-white text-[13px] uppercase tracking-wide mb-1.5 drop-shadow-md">
+                <Text
+                    bold
+                    className="text-white text-[13px] uppercase tracking-wide mb-1.5 drop-shadow-md"
+                >
                     Ủy Ban Mặt Trận Tổ Quốc Việt Nam Tỉnh Lạng Sơn
                 </Text>
                 <Text className="text-white/80 text-[11px] leading-relaxed">
-                    Địa chỉ: Đ.Hoàng Văn Thụ, phường Lương Văn Tri, tỉnh Lạng Sơn<br/>
+                    Địa chỉ: Đ.Hoàng Văn Thụ, phường Lương Văn Tri, tỉnh Lạng
+                    Sơn
+                    <br />
                     Điện thoại: (0205) 3812.209 - Email: bbtmttq@langson.gov.vn
                 </Text>
             </div>
@@ -246,7 +280,6 @@ const HomePage = () => {
                             {alertData.length} khu vực
                         </strong>{' '}
                         có thiệt hại <b>NẶNG</b> trong bán kính 3km quanh bạn.
-                        Vui lòng chú ý an toàn!
                     </Text>
                     <div className="w-full max-h-48 overflow-y-auto text-left bg-red-50 p-3 rounded-lg border border-red-100 mb-4 shadow-inner">
                         {alertData.map((alert, index) => (
@@ -282,7 +315,7 @@ const HomePage = () => {
                     </Button>
                     <Button
                         fullWidth
-                        className="bg-red-600 text-white border border-red-700 active:bg-red-800 shadow-md"
+                        className="bg-red-600 text-white border border-red-700 shadow-md"
                         onClick={() => {
                             setAlertModalVisible(false)
                             navigate('/damage-map')

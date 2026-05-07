@@ -32,6 +32,7 @@ const CreateDamageReport = () => {
         longitude: 0,
         address: '',
         imageUrls: [],
+        contactPhone: '',
     })
 
     const [isSubmitting, setIsSubmitting] = useState(false)
@@ -111,6 +112,11 @@ const CreateDamageReport = () => {
             return snackbar.openSnackbar({
                 type: 'warning',
                 text: 'Vui lòng nhập tiêu đề.',
+            })
+        if (!formData.contactPhone.trim())
+            return snackbar.openSnackbar({
+                type: 'warning',
+                text: 'Vui lòng nhập số điện thoại.',
             })
         if (!formData.description.trim())
             return snackbar.openSnackbar({
@@ -194,6 +200,16 @@ const CreateDamageReport = () => {
                         placeholder="VD: Bão tốc mái tôn, cây đổ..."
                         value={formData.title}
                         onChange={(e) => handleChange('title', e.target.value)}
+                    />
+
+                    <Input
+                        label="Số điện thoại liên hệ (*)"
+                        type="tel"
+                        placeholder="VD: 0912345678"
+                        value={formData.contactPhone}
+                        onChange={(e) =>
+                            handleChange('contactPhone', e.target.value)
+                        }
                     />
 
                     <div className="grid grid-cols-2 gap-3">
