@@ -1,5 +1,4 @@
 import { useRef, useState } from 'react'
-import { getLocation } from 'zmp-sdk/apis'
 import {
     Box,
     Button,
@@ -14,6 +13,7 @@ import {
     useSnackbar,
 } from 'zmp-ui'
 import { createDamageReport, uploadDamageImage } from '../../services/damageApi'
+import { getCurrentLocation } from '../../shared/location/locationService'
 
 const { Option } = Select
 
@@ -45,26 +45,34 @@ const CreateDamageReport = () => {
 
     const handleGetLocation = async () => {
         setIsLocating(true)
+
         try {
-            const location = await getLocation({})
-            if (location && location.latitude) {
-                setFormData({
-                    ...formData,
-                    latitude: location.latitude,
-                    longitude: location.longitude,
-                })
+            const location = await getCurrentLocation()
+
+            setFormData((prev) => ({
+                ...prev,
+                latitude: location.latitude,
+                longitude: location.longitude,
+            }))
+
+            if (location.success) {
                 snackbar.openSnackbar({
                     type: 'success',
-                    text: 'Đã cập nhật vị trí GPS!',
+                    text:
+                        location.source === 'zalo-sdk'
+                            ? 'Đã lấy GPS bằng Zalo SDK.'
+                            : 'Đã lấy GPS bằng trình duyệt.',
                 })
             } else {
-                throw new Error('Không có data')
+                snackbar.openSnackbar({
+                    type: 'warning',
+                    text: 'Không lấy được GPS chính xác, đang dùng vị trí mặc định.',
+                })
             }
         } catch (error) {
-            setFormData({ ...formData, latitude: 21.8485, longitude: 106.7578 })
             snackbar.openSnackbar({
-                type: 'warning',
-                text: 'Dùng tọa độ giả lập (Lạng Sơn) để test.',
+                type: 'error',
+                text: 'Lỗi lấy vị trí.',
             })
         } finally {
             setIsLocating(false)

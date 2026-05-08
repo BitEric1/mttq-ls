@@ -30,8 +30,17 @@ export const apiFetch = async (endpoint, options = {}) => {
         const response = await fetch(`${API_BASE_URL}${endpoint}`, config)
         const data = await response.json()
 
-        // 1. Bắt lỗi HTTP cơ bản (Ví dụ: 401 Unauthorized, 404 NotFound, 500 Server Error)
+        // 1. Bắt lỗi HTTP cơ bản
         if (!response.ok) {
+            // ĐẶC TRỊ LỖI 400 CỦA ASP.NET CORE
+            if (response.status === 400 && data.errors) {
+                console.error('🔥 CHI TIẾT LỖI 400 TỪ BACKEND:', data.errors)
+                // Lấy thông báo lỗi đầu tiên để hiện lên UI cho dễ nhìn
+                const firstErrorKey = Object.keys(data.errors)[0]
+                const firstErrorMessage = data.errors[firstErrorKey][0]
+                throw new Error(firstErrorMessage)
+            }
+
             throw new Error(data.message || 'Có lỗi kết nối đến máy chủ.')
         }
 
@@ -40,13 +49,12 @@ export const apiFetch = async (endpoint, options = {}) => {
             throw new Error(data.message || 'Thao tác không thành công.')
         }
 
-        // Nếu thành công, chỉ trả về phần "data" lõi để các component UI dễ sử dụng
         return data.data
     } catch (error) {
         console.error(
             `[API Error] ${options.method || 'GET'} ${endpoint}:`,
             error,
         )
-        throw error // Ném lỗi ra ngoài để UI hiển thị popup/toast
+        throw error
     }
 }

@@ -1,7 +1,7 @@
 // src/pages/surveys.jsx
 import { useEffect, useState } from 'react'
 import { Box, Header, Icon, Page, Spinner, Text, useNavigate } from 'zmp-ui'
-import { apiFetch } from '../services/api'
+import { apiFetch } from '../../services/api'
 
 const SurveysPage = () => {
     const navigate = useNavigate()

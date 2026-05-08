@@ -1,6 +1,6 @@
 // src/pages/index.jsx
 import { useEffect, useState } from 'react'
-import { getLocation } from 'zmp-sdk/apis'
+import { getLocation, openWebview } from 'zmp-sdk/apis'
 import {
     Avatar,
     Box,
@@ -69,6 +69,21 @@ const HomePage = () => {
         checkDangerZone()
     }, [])
 
+    const makePhoneCall = async (phoneNumber) => {
+        try {
+            await openWebview({
+                url: `tel:${phoneNumber}`,
+            })
+        } catch (error) {
+            console.error('Call failed:', error)
+
+            snackbar.openSnackbar({
+                type: 'error',
+                text: 'Không thể mở cuộc gọi',
+            })
+        }
+    }
+
     // ==========================================
     // DANH SÁCH MENU (9 ITEMS - 3 CỘT x 3 HÀNG)
     // ==========================================
@@ -77,9 +92,7 @@ const HomePage = () => {
             title: 'Gọi khẩn cấp',
             icon: 'zi-call',
             color: 'text-red-600',
-            action: () => {
-                window.location.href = 'tel:02053812209'
-            }, // Lệnh gọi điện thoại
+            path: '/emergency',
             isPulse: true, // Cờ tạo hiệu ứng nhấp nháy
         },
         {

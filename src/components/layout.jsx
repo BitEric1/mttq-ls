@@ -7,18 +7,20 @@ import {
     ZMPRouter,
 } from 'zmp-ui'
 
-import CreateReportPage from '../pages/create-report'
 import DamageMap from '../pages/DamageMaps/damage-map'
 import CreateDamageReport from '../pages/DamageReports/create-damage-report'
 import DamageReportDetail from '../pages/DamageReports/damage-report-detail'
 import MyDamageReports from '../pages/DamageReports/my-damage-reports'
+import EmergencyPage from '../pages/Emergency'
+import EmergencyDetailPage from '../pages/Emergency/detail'
 import Guidelines from '../pages/Guidelines/guidelines'
 import HomePage from '../pages/index'
-import MyReportsPage from '../pages/my-reports'
-import NewsPage from '../pages/news'
-import ReportDetailsPage from '../pages/report-details'
-import SurveyDetailPage from '../pages/survey-detail'
-import SurveysPage from '../pages/surveys'
+import NewsPage from '../pages/News/news'
+import CreateReportPage from '../pages/Reports/create-report'
+import MyReportsPage from '../pages/Reports/my-reports'
+import ReportDetailsPage from '../pages/Reports/report-details'
+import SurveyDetailPage from '../pages/Surveys/survey-detail'
+import SurveysPage from '../pages/Surveys/surveys'
 
 const Layout = () => {
     return (
@@ -58,6 +60,11 @@ const Layout = () => {
                         <Route
                             path="/damage-reports/:id"
                             element={<DamageReportDetail />}
+                        />
+                        <Route path="/emergency" element={<EmergencyPage />} />
+                        <Route
+                            path="/emergency/:id"
+                            element={<EmergencyDetailPage />}
                         />
                     </AnimationRoutes>
                 </ZMPRouter>

@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router' // Dùng để lấy ID từ URL
 import { Box, Header, Icon, Page, Spinner, Text } from 'zmp-ui'
-import { apiFetch } from '../services/api'
+import { apiFetch } from '../../services/api'
 
 const ReportDetailsPage = () => {
     const { id } = useParams() // Lấy tham số :id mà ta đã định nghĩa ở Route

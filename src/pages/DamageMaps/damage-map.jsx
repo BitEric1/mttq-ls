@@ -1,28 +1,33 @@
 import L from 'leaflet'
-import { useEffect, useState, useCallback } from 'react'
+
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+
 import {
+    Circle,
     CircleMarker,
     MapContainer,
     Marker,
     Popup,
     TileLayer,
+    ZoomControl,
 } from 'react-leaflet'
 
-import { getLocation } from 'zmp-sdk/apis'
 import {
-    Box,
-    Header,
-    Page,
-    Spinner,
-    Text,
-    useSnackbar,
-    Icon,
-} from 'zmp-ui'
+    AlertTriangle,
+    Cross,
+    LocateFixed,
+    Package,
+    ShieldAlert,
+} from 'lucide-react'
+
+import { Header, Page, Spinner, Text, useSnackbar } from 'zmp-ui'
+
+import { getActiveSupports, getGeoDamageMap } from '../../services/damageApi'
 
 import {
-    getActiveSupports,
-    getGeoDamageMap,
-} from '../../services/damageApi'
+    getCurrentLocation,
+    isValidCoordinate,
+} from '../../shared/location/locationService'
 
 import 'leaflet/dist/leaflet.css'
 
@@ -31,356 +36,430 @@ const DEFAULT_LOCATION = [21.8485, 106.7578]
 const DamageMap = () => {
     const snackbar = useSnackbar()
 
+    const mapRef = useRef(null)
+
     const [userLocation, setUserLocation] = useState(DEFAULT_LOCATION)
+
+    const [gpsAccuracy, setGpsAccuracy] = useState(0)
+
     const [damagePoints, setDamagePoints] = useState([])
+
     const [supportPoints, setSupportPoints] = useState([])
 
     const [loading, setLoading] = useState(true)
+
     const [locating, setLocating] = useState(false)
-    const [mapInstance, setMapInstance] = useState(null)
 
     /**
      * =========================
-     * LẤY GPS
+     * LOAD LOCATION
      * =========================
      */
-    const fetchRealLocation = useCallback(
-        async (isManualClick = false) => {
+    const fetchLocation = useCallback(
+        async (manual = false) => {
             setLocating(true)
 
-            let success = false
-            let newLat = null
-            let newLng = null
-
             try {
-                const location = await getLocation({})
-                if (location?.latitude && location?.longitude) {
-                    newLat = location.latitude
-                    newLng = location.longitude
-                    success = true
-                }
-            } catch (error) {
-                console.log('Zalo SDK không lấy được GPS, fallback Browser API...')
-            }
+                const location = await getCurrentLocation()
 
-            if (!success) {
-                success = await new Promise((resolve) => {
-                    if (!navigator.geolocation) {
-                        resolve(false)
-                        return
-                    }
+                const nextLocation = [location.latitude, location.longitude]
 
-                    navigator.geolocation.getCurrentPosition(
-                        (position) => {
-                            newLat = position.coords.latitude
-                            newLng = position.coords.longitude
-                            resolve(true)
-                        },
-                        () => {
-                            resolve(false)
-                        },
-                        {
-                            enableHighAccuracy: false,
-                            timeout: 5000,
-                            maximumAge: 300000,
-                        },
-                    )
-                })
-            }
-
-            setLocating(false)
-
-            if (success && newLat && newLng) {
-                const nextLocation = [newLat, newLng]
                 setUserLocation(nextLocation)
 
-                if (isManualClick && mapInstance) {
-                    mapInstance.flyTo(nextLocation, 14, {
-                        animate: true,
-                        duration: 1,
-                    })
+                setGpsAccuracy(location.accuracy || 0)
 
-                    snackbar.openSnackbar({
-                        type: 'success',
-                        text: 'Đã định vị vị trí của bạn.',
-                        duration: 2000,
+                if (manual && mapRef.current) {
+                    mapRef.current.flyTo(nextLocation, 15, {
+                        animate: true,
+                        duration: 1.2,
                     })
                 }
-            } else if (isManualClick) {
-                snackbar.openSnackbar({
-                    type: 'warning',
-                    text: 'Không thể định vị. Kiểm tra quyền GPS!',
-                    duration: 3000,
-                })
-            }
 
-            return success
+                if (manual) {
+                    snackbar.openSnackbar({
+                        type: location.success ? 'success' : 'warning',
+
+                        text: location.success
+                            ? 'Đã cập nhật GPS.'
+                            : 'Đang dùng vị trí mặc định.',
+                    })
+                }
+            } catch (error) {
+                console.error(error)
+
+                snackbar.openSnackbar({
+                    type: 'error',
+                    text: 'Không thể lấy GPS.',
+                })
+            } finally {
+                setLocating(false)
+            }
         },
-        [mapInstance, snackbar],
+        [snackbar],
     )
 
     /**
      * =========================
-     * LOAD DATA 
+     * LOAD DATA
      * =========================
      */
     useEffect(() => {
-        const initData = async () => {
+        const init = async () => {
             try {
-                const [mapRes, supportRes] = await Promise.allSettled([
+                setLoading(true)
+
+                const [damageRes, supportRes] = await Promise.allSettled([
                     getGeoDamageMap(),
                     getActiveSupports(),
                 ])
 
-                if (mapRes.status === 'fulfilled' && mapRes.value?.success) {
-                    setDamagePoints(mapRes.value.data || [])
+                if (
+                    damageRes.status === 'fulfilled' &&
+                    damageRes.value?.success
+                ) {
+                    const clean = damageRes.value.data.filter((p) =>
+                        isValidCoordinate(p.latitude, p.longitude),
+                    )
+
+                    setDamagePoints(clean)
                 }
 
-                if (supportRes.status === 'fulfilled' && supportRes.value?.success) {
-                    setSupportPoints(supportRes.value.data || [])
+                if (
+                    supportRes.status === 'fulfilled' &&
+                    supportRes.value?.success
+                ) {
+                    const clean = supportRes.value.data.filter((p) =>
+                        isValidCoordinate(p.latitude, p.longitude),
+                    )
+
+                    setSupportPoints(clean)
                 }
 
-                fetchRealLocation(false)
+                await fetchLocation(false)
             } catch (error) {
-                console.error('Lỗi tải data map:', error)
+                console.error(error)
+
                 snackbar.openSnackbar({
                     type: 'error',
-                    text: 'Lỗi tải dữ liệu bản đồ!',
+                    text: 'Lỗi tải dữ liệu bản đồ.',
                 })
             } finally {
                 setLoading(false)
             }
         }
 
-        initData()
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        init()
     }, [])
 
     /**
      * =========================
-     * STYLE THIỆT HẠI
+     * DAMAGE STYLE
      * =========================
      */
     const getDamageStyle = (severity) => {
         switch (severity) {
-            case 'HIGH':
-            case 'Heavy':
             case 3:
-                return { color: '#dc2626', fillColor: '#ef4444', text: 'Nặng' }
-            case 'MEDIUM':
-            case 'Medium':
+            case 'HIGH':
+                return {
+                    color: '#dc2626',
+                    fill: '#ef4444',
+                    label: 'Nặng',
+                }
+
             case 2:
-                return { color: '#ea580c', fillColor: '#f97316', text: 'Trung bình' }
-            case 'LOW':
-            case 'Light':
-            case 1:
-                return { color: '#16a34a', fillColor: '#22c55e', text: 'Nhẹ' }
+            case 'MEDIUM':
+                return {
+                    color: '#ea580c',
+                    fill: '#f97316',
+                    label: 'Trung bình',
+                }
+
             default:
-                return { color: '#4b5563', fillColor: '#6b7280', text: 'Không rõ' }
+                return {
+                    color: '#16a34a',
+                    fill: '#22c55e',
+                    label: 'Nhẹ',
+                }
         }
     }
 
     /**
      * =========================
-     * ICON ĐIỂM HỖ TRỢ
+     * SUPPORT ICONS
      * =========================
      */
-    const getSupportIcon = (type) => {
-        let emoji = '🆘'
-        let bgColor = 'bg-blue-600'
-        let label = 'Hỗ trợ'
-
-        switch (type) {
-            case 'MEDICAL':
-            case 1:
-                emoji = '🏥'
-                bgColor = 'bg-green-600'
-                label = 'Y tế'
-                break
-            case 'RELIEF':
-            case 2:
-                emoji = '📦'
-                bgColor = 'bg-blue-500'
-                label = 'Cứu trợ'
-                break
-            case 'EVACUATION':
-            case 3:
-                emoji = '🛡️'
-                bgColor = 'bg-indigo-600'
-                label = 'Sơ tán'
-                break
-        }
-
-        const htmlContent = `
-            <div class="${bgColor} text-white rounded-full w-8 h-8 flex items-center justify-center border-2 border-white shadow-lg text-lg">
-                ${emoji}
-            </div>
-        `
+    const supportIcons = useMemo(() => {
+        const createIcon = (emoji, bg) =>
+            L.divIcon({
+                html: `
+                    <div
+                        style="
+                            width:40px;
+                            height:40px;
+                            border-radius:999px;
+                            background:${bg};
+                            display:flex;
+                            align-items:center;
+                            justify-content:center;
+                            border:3px solid white;
+                            box-shadow:0 4px 12px rgba(0,0,0,.25);
+                            font-size:18px;
+                        "
+                    >
+                        ${emoji}
+                    </div>
+                `,
+                className: '',
+                iconSize: [40, 40],
+                iconAnchor: [20, 20],
+            })
 
         return {
-            icon: L.divIcon({
-                html: htmlContent,
-                className: 'custom-support-icon',
-                iconSize: [32, 32],
-                iconAnchor: [16, 16],
-            }),
-            label,
+            medical: createIcon('🏥', '#16a34a'),
+            relief: createIcon('📦', '#2563eb'),
+            evacuation: createIcon('🛡️', '#7c3aed'),
+            default: createIcon('🆘', '#475569'),
+        }
+    }, [])
+
+    const getSupportIcon = (type) => {
+        switch (type) {
+            case 1:
+            case 'MEDICAL':
+                return supportIcons.medical
+
+            case 2:
+            case 'RELIEF':
+                return supportIcons.relief
+
+            case 3:
+            case 'EVACUATION':
+                return supportIcons.evacuation
+
+            default:
+                return supportIcons.default
         }
     }
 
     return (
-        <Page className="bg-white flex flex-col h-screen overflow-hidden">
-            <Header title="Bản đồ Thiệt hại & Cứu trợ" showBackIcon={true} />
+        <Page className="bg-black">
+            <Header title="Bản đồ Thiệt hại" showBackIcon />
 
-            <div className="flex-1 relative">
-                {/* LOADING OVERLAY */}
+            <div className="relative h-screen w-full">
+                {/* MAP */}
+                <MapContainer
+                    center={userLocation}
+                    zoom={12}
+                    zoomControl={false}
+                    ref={mapRef}
+                    style={{
+                        width: '100%',
+                        height: '100%',
+                    }}
+                >
+                    <ZoomControl position="bottomleft" />
+
+                    <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+
+                    {/* GPS ACCURACY */}
+                    {gpsAccuracy > 0 && (
+                        <Circle
+                            center={userLocation}
+                            radius={gpsAccuracy}
+                            pathOptions={{
+                                color: '#3b82f6',
+                                fillColor: '#60a5fa',
+                                fillOpacity: 0.15,
+                            }}
+                        />
+                    )}
+
+                    {/* USER */}
+                    <CircleMarker
+                        center={userLocation}
+                        radius={10}
+                        pathOptions={{
+                            color: '#ffffff',
+                            fillColor: '#2563eb',
+                            fillOpacity: 1,
+                            weight: 3,
+                        }}
+                    >
+                        <Popup>
+                            <div className="min-w-[160px]">
+                                <div className="font-bold text-blue-600">
+                                    Vị trí của bạn
+                                </div>
+
+                                <div className="text-xs mt-2 text-gray-500">
+                                    Sai số GPS:
+                                    {' ~'}
+                                    {Math.round(gpsAccuracy)}m
+                                </div>
+                            </div>
+                        </Popup>
+                    </CircleMarker>
+
+                    {/* DAMAGE */}
+                    {damagePoints.map((point) => {
+                        const style = getDamageStyle(point.severity)
+
+                        return (
+                            <CircleMarker
+                                key={point.id}
+                                center={[point.latitude, point.longitude]}
+                                radius={14}
+                                pathOptions={{
+                                    color: style.color,
+                                    fillColor: style.fill,
+                                    fillOpacity: 0.65,
+                                    weight: 2,
+                                }}
+                            >
+                                <Popup>
+                                    <div className="min-w-[180px]">
+                                        <div className="font-bold text-red-600 text-sm">
+                                            {point.damageType}
+                                        </div>
+
+                                        <div className="text-xs mt-2">
+                                            Mức độ:
+                                            <b
+                                                style={{
+                                                    color: style.color,
+                                                }}
+                                            >
+                                                {' '}
+                                                {style.label}
+                                            </b>
+                                        </div>
+
+                                        {point.address && (
+                                            <div className="text-xs text-gray-500 mt-2 border-t pt-2">
+                                                {point.address}
+                                            </div>
+                                        )}
+                                    </div>
+                                </Popup>
+                            </CircleMarker>
+                        )
+                    })}
+
+                    {/* SUPPORT */}
+                    {supportPoints.map((point) => (
+                        <Marker
+                            key={point.id}
+                            position={[point.latitude, point.longitude]}
+                            icon={getSupportIcon(point.type)}
+                        >
+                            <Popup>
+                                <div className="min-w-[200px]">
+                                    <div className="font-bold text-blue-700 text-sm uppercase">
+                                        {point.name}
+                                    </div>
+
+                                    <div className="text-xs mt-2 text-gray-600">
+                                        Sức chứa:
+                                        <b> {point.capacity}</b>
+                                    </div>
+
+                                    <div className="text-xs mt-1 text-gray-600">
+                                        SĐT:
+                                        <a
+                                            href={`tel:${point.contactPhone}`}
+                                            className="text-blue-600 font-bold"
+                                        >
+                                            {' '}
+                                            {point.contactPhone}
+                                        </a>
+                                    </div>
+
+                                    <div className="text-xs mt-2 text-gray-500 border-t pt-2">
+                                        {point.address}
+                                    </div>
+                                </div>
+                            </Popup>
+                        </Marker>
+                    ))}
+                </MapContainer>
+
+                {/* LOADING */}
                 {loading && (
-                    <div className="absolute inset-0 z-[1000] bg-white/80 flex flex-col items-center justify-center">
+                    <div className="absolute inset-0 bg-black/30 backdrop-blur-sm z-[1000] flex flex-col items-center justify-center">
                         <Spinner visible />
-                        <Text className="mt-2 font-medium text-gray-600">
-                            Đang đồng bộ dữ liệu...
+
+                        <Text className="text-white mt-3 font-medium">
+                            Đang tải dữ liệu bản đồ...
                         </Text>
                     </div>
                 )}
 
-                {/* BẢN ĐỒ */}
-                <Box className="w-full h-full">
-                    <MapContainer
-                        center={userLocation}
-                        zoom={12}
-                        zoomControl={false}
-                        style={{ width: '100%', height: '100%', zIndex: 1 }}
-                        ref={setMapInstance}
-                    >
-                        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-
-                        {/* CHẤM XANH ĐỊNH VỊ NGƯỜI DÙNG */}
-                        <CircleMarker
-                            center={userLocation}
-                            radius={8}
-                            pathOptions={{
-                                color: '#ffffff',
-                                fillColor: '#2563eb',
-                                fillOpacity: 1,
-                                weight: 2,
-                            }}
-                        >
-                            <Popup>Vị trí của bạn</Popup>
-                        </CircleMarker>
-
-                        {/* ĐIỂM THIỆT HẠI */}
-                        {damagePoints
-                            .filter(p => typeof p.latitude === 'number' && typeof p.longitude === 'number')
-                            .map((point) => {
-                                const style = getDamageStyle(point.severity)
-                                return (
-                                    <CircleMarker
-                                        key={`damage-${point.id}`}
-                                        center={[point.latitude, point.longitude]}
-                                        radius={12}
-                                        pathOptions={{
-                                            color: style.color,
-                                            fillColor: style.fillColor,
-                                            fillOpacity: 0.6,
-                                            weight: 2,
-                                        }}
-                                    >
-                                        <Popup>
-                                            <div className="text-center font-sans">
-                                                <div className="font-bold text-gray-800 text-sm mb-1">
-                                                    {point.damageType}
-                                                </div>
-                                                <div className="text-xs" style={{ color: style.color }}>
-                                                    Mức độ: <b>{style.text}</b>
-                                                </div>
-                                            </div>
-                                        </Popup>
-                                    </CircleMarker>
-                                )
-                            })}
-
-                        {/* ĐIỂM HỖ TRỢ */}
-                        {supportPoints
-                            .filter(p => typeof p.latitude === 'number' && typeof p.longitude === 'number')
-                            .map((point) => {
-                                const iconConfig = getSupportIcon(point.type)
-                                return (
-                                    <Marker
-                                        key={`support-${point.id}`}
-                                        position={[point.latitude, point.longitude]}
-                                        icon={iconConfig.icon}
-                                    >
-                                        <Popup>
-                                            <div className="font-sans">
-                                                <div className="font-bold text-blue-700 text-sm mb-1 uppercase">
-                                                    {point.name}
-                                                </div>
-                                                <div className="text-xs text-gray-600 mb-1">
-                                                    <b>Loại:</b> {iconConfig.label}
-                                                </div>
-                                                <div className="text-xs text-gray-600 mb-1">
-                                                    <b>Sức chứa:</b> {point.capacity} người
-                                                </div>
-                                                <div className="text-xs text-gray-600 mb-1">
-                                                    <b>SĐT:</b>{' '}
-                                                    <a href={`tel:${point.contactPhone}`} className="text-blue-500 font-bold">
-                                                        {point.contactPhone}
-                                                    </a>
-                                                </div>
-                                                <div className="text-xs text-gray-500 mt-2 border-t pt-1">
-                                                    {point.address}
-                                                </div>
-                                            </div>
-                                        </Popup>
-                                    </Marker>
-                                )
-                            })}
-                    </MapContainer>
-                </Box>
-
-                {/* =======================================
-                    BẢNG ĐIỀU KHIỂN & CHÚ GIẢI (FIXED BÊN PHẢI)
-                    ======================================= */}
-                <div className="absolute right-4 bottom-6 z-[1000] flex flex-col gap-3 items-end">
-                    
-                    {/* NÚT LẤY LẠI GPS */}
-                    <div
-                        className="bg-white w-11 h-11 rounded-full shadow-lg flex items-center justify-center border border-gray-200 active:bg-gray-100 cursor-pointer transition-colors"
-                        onClick={() => fetchRealLocation(true)}
+                {/* FLOAT CONTROLS */}
+                <div className="absolute right-4 bottom-6 z-[1000] flex flex-col gap-3">
+                    {/* GPS BUTTON */}
+                    <button
+                        onClick={() => fetchLocation(true)}
+                        className="w-14 h-14 rounded-2xl bg-white shadow-2xl border border-gray-200 flex items-center justify-center active:scale-95 transition"
                     >
                         {locating ? (
                             <Spinner size="small" />
                         ) : (
-                            <Icon icon="zi-location" className="text-blue-600 text-xl" />
+                            <LocateFixed size={24} className="text-blue-600" />
                         )}
-                    </div>
+                    </button>
 
-                    {/* CHÚ GIẢI (DỌC) */}
-                    <div className="bg-white/95 p-3 rounded-xl shadow-lg border border-gray-100 flex flex-col gap-2.5 text-[12px] font-medium text-gray-700 min-w-[110px]">
-                        <div className="flex items-center gap-2">
-                            <div className="w-3.5 h-3.5 rounded-full bg-red-500 border border-red-700"></div>
-                            Nặng
+                    {/* LEGEND */}
+                    <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-4 min-w-[170px] border border-white/60">
+                        <div className="font-bold text-gray-800 mb-3">
+                            Chú giải
                         </div>
-                        <div className="flex items-center gap-2">
-                            <div className="w-3.5 h-3.5 rounded-full bg-orange-500 border border-orange-700"></div>
-                            Trung bình
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <div className="w-3.5 h-3.5 rounded-full bg-green-500 border border-green-700"></div>
-                            Nhẹ
-                        </div>
-                        
-                        {/* Đường kẻ ngang phân cách */}
-                        <div className="h-[1px] bg-gray-200 w-full my-0.5"></div>
-                        
-                        <div className="flex items-center gap-2 font-bold text-green-700">
-                            <span className="text-sm">🏥</span> Y tế
-                        </div>
-                        <div className="flex items-center gap-2 font-bold text-blue-700">
-                            <span className="text-sm">📦</span> Cứu trợ
+
+                        <div className="space-y-2 text-xs">
+                            <div className="flex items-center gap-2">
+                                <AlertTriangle
+                                    size={16}
+                                    className="text-red-500"
+                                />
+                                Thiệt hại nặng
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                                <AlertTriangle
+                                    size={16}
+                                    className="text-orange-500"
+                                />
+                                Trung bình
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                                <AlertTriangle
+                                    size={16}
+                                    className="text-green-500"
+                                />
+                                Nhẹ
+                            </div>
+
+                            <div className="h-px bg-gray-200 my-2" />
+
+                            <div className="flex items-center gap-2">
+                                <Cross size={16} className="text-green-600" />Y
+                                tế
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                                <Package size={16} className="text-blue-600" />
+                                Cứu trợ
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                                <ShieldAlert
+                                    size={16}
+                                    className="text-violet-600"
+                                />
+                                Sơ tán
+                            </div>
                         </div>
                     </div>
-
                 </div>
             </div>
         </Page>

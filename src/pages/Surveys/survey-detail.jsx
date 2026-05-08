@@ -12,7 +12,7 @@ import {
     useNavigate,
     useSnackbar,
 } from 'zmp-ui'
-import { apiFetch } from '../services/api'
+import { apiFetch } from '../../services/api'
 
 const SurveyDetailPage = () => {
     const { id } = useParams()
